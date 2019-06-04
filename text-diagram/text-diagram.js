@@ -571,6 +571,7 @@ var util = (function() {
   var lowers = 'abcdefghijklmnopqrstuvwxyz';
   var uppers = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   var underscore = '_';
+  var allowed_special = '.+*/()';
 
   var _is_in = function(in_list, in_c) {
     return in_list.indexOf(in_c) >= 0;
@@ -591,6 +592,10 @@ var util = (function() {
 
     is_underscore: function(in_c) {
       return underscore == in_c;
+    },
+
+    is_special: function (in_c) {
+      return _is_in(allowed_special, in_c);
     },
 
     is_whitespace: function(in_c) {
@@ -631,7 +636,7 @@ var parser = (function() {
       var c = in_buffer.charAt(idx++);
       switch (state) {
         case 0: //initial state
-          if (util.is_alpha_digit(c)) {
+          if (util.is_alpha_digit(c) || util.is_underscore(c) || util.is_special(c)) {
             tmp_buffer = c;
             state = 1;
           }
@@ -660,7 +665,7 @@ var parser = (function() {
           break;
 
         case 1: //word
-          if (util.is_alpha_digit(c) || util.is_underscore(c)) {
+          if (util.is_alpha_digit(c) || util.is_underscore(c) || util.is_special(c)) {
             tmp_buffer = tmp_buffer + c;
           }
           else {
@@ -686,6 +691,8 @@ var parser = (function() {
         case 3: //second slash in comment
           if ('/' == c) {
             state = 4;
+          } else {
+            r_tokens.push(_token('word', c));
           }
           break;
 
@@ -777,7 +784,7 @@ var parser = (function() {
 
     for (var i in in_str) {
       var c = in_str.charAt(i);
-      if (!util.is_alpha_digit(c) && !util.is_underscore(c)) {
+      if (!util.is_alpha_digit(c) && !util.is_underscore(c) && !util.is_special(c)) {
         return false;
       }
     }
